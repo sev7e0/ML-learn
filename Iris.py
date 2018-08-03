@@ -2,6 +2,7 @@
 
 # import pandas as pd #数据分析、处理
 import numpy as np
+# https://zhuanlan.zhihu.com/p/22345658
 import sklearn.datasets as load_Iris
 
 # 读取数据
