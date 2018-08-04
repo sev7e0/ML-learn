@@ -1,6 +1,5 @@
 # coding:utf-8
 
-# import pandas as pd #数据分析、处理
 import numpy as np
 # https://zhuanlan.zhihu.com/p/22345658
 import sklearn.datasets as load_Iris
@@ -17,10 +16,10 @@ x_train, x_test, y_train, y_test = train_test_split(dataset[0], dataset[1], test
 from sklearn.neighbors import KNeighborsClassifier
 
 knn = KNeighborsClassifier()
+
 knn.fit(x_train, y_train)
 
 # 输入测试数据
 y_res = knn.predict(x_test)
-predict = knn.score(x_test, y_test)
+
 print('Score:{:f}'.format(np.mean(y_test == y_res)))
-print('Score:{:f}'.format(predict))
