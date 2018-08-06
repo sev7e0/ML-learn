@@ -12,7 +12,6 @@ from sklearn.model_selection import train_test_split
 # 分割数据 抽取百分之十作为测试数据集 random_state随机数种子
 x_train, x_test, y_train, y_test = train_test_split(dataset[0], dataset[1], test_size=0.1, random_state=1)
 
-
 from sklearn.neighbors import KNeighborsClassifier
 
 knn = KNeighborsClassifier()
