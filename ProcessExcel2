@@ -1,0 +1,87 @@
+# -*- coding: utf-8 -*-
+import codecs
+import os
+import xlrd
+import json
+from pip._vendor.distlib.compat import raw_input
+resultSet=[]
+def dealRiskLevel(riskLevel):
+    dic = {}
+    # print(riskLevel.split("；"))
+    region = riskLevel.split("；")
+    for a in range(len(region)-1):
+        regionsplit = region[a].split("：")
+        dics = {str(regionsplit[0]).replace("\n",""):regionsplit[1]}
+        dic.update(dics)
+    return dic
+
+def dealNameContent(s, type):
+    # print(name)
+    for a in range(len(resultSet)):
+        if resultSet[a]["reason"] == s[1]:
+            illegalObj = {"name": s[5], "content": s[6]}
+            if type==0:
+                resultSet[a]["illegal"].append(illegalObj.copy())
+            if type==1:
+                resultSet[a]["punish"].append(illegalObj.copy())
+            return ""
+    illegalObj = {"name": s[5], "content": s[6]}
+    illegalArray = [illegalObj]
+    return illegalArray
+
+def dealKeyword(data, s):
+    keywords = s[7]
+    keywordss= []
+    try:
+        if not keywords:
+            print(s[1]+"------当前关键词未配置")
+            return ""
+        # 根据sheet名称找到索引
+        index = data.sheet_names().index(keywords)
+        # 通过索引找到该sheet
+        table = data.sheets()[index]
+    except Exception:
+        print(keywords+"该关键词对应的sheet未找到")
+        return ""
+    nrows = table.nrows
+    for i in range(nrows):
+        s = table.row_values(i)
+        for j in range(len(s)):
+            # 过滤掉为空的单元格
+            if s[j]!= "":
+                keywordss.append(s[j])
+    return keywordss
+
+
+def saveFile(file_path, file_name, data):
+    output = codecs.open(file_path + "/" + file_name + ".json", 'w', "utf-8")
+    output.write(data)
+    output.close()
+
+def startProcess(path):
+    jsonstr = {}
+    data = xlrd.open_workbook(path)
+    table=data.sheets()[0]
+    nrows=table.nrows
+    for i in range(1, nrows):
+        s = table.row_values(i)
+        jsonstr["illegal"] = dealNameContent(s,0)
+        result = dealNameContent(s,1)
+        jsonstr["punish"] = result
+        if result == "":
+            continue
+        jsonstr["type"] = s[0]
+        jsonstr["reason"] = s[1]
+        jsonstr["riskLevel"] = dealRiskLevel(s[2])
+        jsonstr["keywords"] = dealKeyword(data, s)
+        resultSet.append(jsonstr.copy())
+        # print(jsonstr)
+    returnJson=json.dumps(resultSet, indent=4, sort_keys=True, ensure_ascii=False)
+    saveFile(os.getcwd(), "advertise", returnJson)
+    print("文件已生成 advertise.json")
+
+if __name__ == '__main__':
+    # try:
+    startProcess(raw_input(u'请输入excel文件路径：\n'))
+    # except Exception as e:
+    #     print(e)
