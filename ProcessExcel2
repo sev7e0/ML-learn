@@ -5,12 +5,20 @@ import xlrd
 import json
 from pip._vendor.distlib.compat import raw_input
 resultSet=[]
+key=[]
 def dealRiskLevel(riskLevel):
+    if not riskLevel:
+        return ""
     dic = {}
     # print(riskLevel.split("；"))
     region = riskLevel.split("；")
-    for a in range(len(region)-1):
+    if len(region)==0:
+        region.append(riskLevel)
+    for a in range(0,len(region)):
         regionsplit = region[a].split("：")
+        if len(regionsplit)<=1:
+            print("风险等级解析出错"+regionsplit)
+            continue
         dics = {str(regionsplit[0]).replace("\n",""):regionsplit[1]}
         dic.update(dics)
     return dic
@@ -19,14 +27,19 @@ def dealNameContent(s, type):
     # print(name)
     for a in range(len(resultSet)):
         if resultSet[a]["reason"] == s[1]:
-            illegalObj = {"name": s[5], "content": s[6]}
             if type==0:
+                illegalObj = {"name": s[3], "content": s[4]}
                 resultSet[a]["illegal"].append(illegalObj.copy())
             if type==1:
+                illegalObj = {"name": s[5], "content": s[6]}
                 resultSet[a]["punish"].append(illegalObj.copy())
-            return ""
-    illegalObj = {"name": s[5], "content": s[6]}
-    illegalArray = [illegalObj]
+            return 1
+    if type == 0:
+        illegalObj = {"name": s[3], "content": s[4]}
+        illegalArray = [illegalObj.copy()]
+    if type == 1:
+        illegalObj = {"name": s[5], "content": s[6]}
+        illegalArray = [illegalObj.copy()]
     return illegalArray
 
 def dealKeyword(data, s):
@@ -52,6 +65,13 @@ def dealKeyword(data, s):
                 keywordss.append(s[j])
     return keywordss
 
+def dealRegex(regex):
+    regexs=[]
+    if regex:
+        lines = regex.split("\n")
+        regexs.append(lines)
+    return regexs
+
 
 def saveFile(file_path, file_name, data):
     output = codecs.open(file_path + "/" + file_name + ".json", 'w', "utf-8")
@@ -65,23 +85,38 @@ def startProcess(path):
     nrows=table.nrows
     for i in range(1, nrows):
         s = table.row_values(i)
+        adtype = s[0]
+        # type为空时放弃
+        if adtype == "":
+            continue
+        jsonstr["type"] = adtype
         jsonstr["illegal"] = dealNameContent(s,0)
         result = dealNameContent(s,1)
         jsonstr["punish"] = result
-        if result == "":
+        if result == 1:
+            # 清空当前
+            jsonstr={}
             continue
-        jsonstr["type"] = s[0]
         jsonstr["reason"] = s[1]
         jsonstr["riskLevel"] = dealRiskLevel(s[2])
         jsonstr["keywords"] = dealKeyword(data, s)
+        # 提取所有keywords
+        key.extend(dealKeyword(data,s))
+        jsonstr["regex"] = dealRegex(s[8])  #预留正则
         resultSet.append(jsonstr.copy())
-        # print(jsonstr)
-    returnJson=json.dumps(resultSet, indent=4, sort_keys=True, ensure_ascii=False)
-    saveFile(os.getcwd(), "advertise", returnJson)
-    print("文件已生成 advertise.json")
+    print("类别"+table.row_values(1)[0]+"已处理完成")
+
 
 if __name__ == '__main__':
     # try:
-    startProcess(raw_input(u'请输入excel文件路径：\n'))
+    while raw_input(u'添加文件输入 "c"\n生成文件输入任意字符: \n')=="c":
+        startProcess(raw_input(u'请输入excel文件路径：\n'))
+
+    returnJson = json.dumps(resultSet, indent=4, sort_keys=True, ensure_ascii=False)
+    keys = json.dumps(key, indent=4, sort_keys=True, ensure_ascii=False)
+    saveFile(os.getcwd(), "advertise", returnJson)
+    saveFile(os.getcwd(), "keys", keys)
+    print("文件已生成 advertise.json")
+    print("文件已生成 key.json")
     # except Exception as e:
     #     print(e)
