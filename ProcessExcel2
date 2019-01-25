@@ -6,6 +6,7 @@ import json
 from pip._vendor.distlib.compat import raw_input
 resultSet=[]
 key=[]
+regexSet=[]
 def dealRiskLevel(riskLevel):
     if not riskLevel:
         return ""
@@ -15,9 +16,11 @@ def dealRiskLevel(riskLevel):
     if len(region)==0:
         region.append(riskLevel)
     for a in range(0,len(region)):
+        if region[a]=="":
+            continue
         regionsplit = region[a].split("：")
         if len(regionsplit)<=1:
-            print("风险等级解析出错"+regionsplit)
+            print("风险等级解析出错")
             continue
         dics = {str(regionsplit[0]).replace("\n",""):regionsplit[1]}
         dic.update(dics)
@@ -62,14 +65,16 @@ def dealKeyword(data, s):
         for j in range(len(s)):
             # 过滤掉为空的单元格
             if s[j]!= "":
-                keywordss.append(s[j])
+                keywordss.append(str(s[j]).strip("\n").strip("").strip(" "))
     return keywordss
 
 def dealRegex(regex):
     regexs=[]
     if regex:
         lines = regex.split("\n")
-        regexs.append(lines)
+        lines = list(filter(lambda x: x!="",lines))
+        regexSet.extend(lines)
+        regexs.extend(lines)
     return regexs
 
 
@@ -104,19 +109,24 @@ def startProcess(path):
         key.extend(dealKeyword(data,s))
         jsonstr["regex"] = dealRegex(s[8])  #预留正则
         resultSet.append(jsonstr.copy())
-    print("类别"+table.row_values(1)[0]+"已处理完成")
+    print("类别--"+table.row_values(1)[0]+"--已处理完成")
 
 
 if __name__ == '__main__':
     # try:
-    while raw_input(u'添加文件输入 "c"\n生成文件输入任意字符: \n')=="c":
-        startProcess(raw_input(u'请输入excel文件路径：\n'))
-
+    while 1:
+        inputOption = raw_input(u'生成文件请输入 "st" ---继续添加请输入excel文件路径：\n')
+        if inputOption == "st":
+            break
+        startProcess(inputOption)
     returnJson = json.dumps(resultSet, indent=4, sort_keys=True, ensure_ascii=False)
     keys = json.dumps(key, indent=4, sort_keys=True, ensure_ascii=False)
+    regexs = json.dumps(regexSet, indent=4, sort_keys=True, ensure_ascii=False)
     saveFile(os.getcwd(), "advertise", returnJson)
     saveFile(os.getcwd(), "keys", keys)
+    saveFile(os.getcwd(), "regexs", regexs)
     print("文件已生成 advertise.json")
     print("文件已生成 key.json")
+    print("文件已生成 regexs.json")
     # except Exception as e:
     #     print(e)
