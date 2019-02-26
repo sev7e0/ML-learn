@@ -29,7 +29,7 @@ def dealRiskLevel(riskLevel):
 def dealNameContent(s, type):
     # print(name)
     for a in range(len(resultSet)):
-        if resultSet[a]["reason"] == s[1]:
+        if (resultSet[a]["reason"] == s[1] )and( resultSet[a]["type"] == s[0]):
             if type==0:
                 illegalObj = {"name": s[3], "content": s[4]}
                 resultSet[a]["illegal"].append(illegalObj.copy())
@@ -118,6 +118,9 @@ if __name__ == '__main__':
         inputOption = raw_input(u'生成文件请输入 "st" ---继续添加请输入excel文件路径：\n')
         if inputOption == "st":
             break
+        if not os.path.isfile(inputOption):
+            print("文件不存在请重新输入!!")
+            continue
         startProcess(inputOption)
     returnJson = json.dumps(resultSet, indent=4, sort_keys=True, ensure_ascii=False)
     keys = json.dumps(key, indent=4, sort_keys=True, ensure_ascii=False)
